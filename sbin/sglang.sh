@@ -2,12 +2,14 @@
 
 # https://docs.sglang.ai/backend/server_arguments.html
 
+PROJECT_ROOT=$(dirname $(dirname $(readlink -f $0)))
+
 export CUDA_VISIBLE_DEVICES=1
 
-nohup python -m sglang.launch_server --model-path ./models/Qwen2.5-32B-Instruct-GPTQ-Int4 \
+nohup python -m sglang.launch_server --model-path ${PROJECT_ROOT}/models/Qwen2.5-32B-Instruct-GPTQ-Int4 \
 --trust-remote-code \
 --tp 1 \
 --mem_fraction_static 0.9 \
 --host 0.0.0.0 \
 --port 6011 \
-> ./logs/sglang.log 2>&1 &
+> ${PROJECT_ROOT}/logs/sglang.log 2>&1 &
