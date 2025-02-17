@@ -12,5 +12,5 @@ conda activate fs-gpt
 
 - 安装项目
 ```
-pip install -e ".[torch, embedding]"
+pip install -e ".[torch, embedding, inference]"
 ```

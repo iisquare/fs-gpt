@@ -27,7 +27,8 @@ def get_console_scripts() -> List[str]:
 
 extra_require = {
     "torch": ["torch"],
-    "embedding": ["sentence-transformers", "tiktoken"]
+    "embedding": ["sentence-transformers", "tiktoken"],
+    "inference": ["vllm", "sgl-kernel", "sglang[all]"],
 }
 
 
