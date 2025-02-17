@@ -1,0 +1,2 @@
+class ModelUtil:
+    pass

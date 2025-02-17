@@ -1,0 +1,78 @@
+import gc
+from contextlib import asynccontextmanager
+from enum import Enum
+from pathlib import Path
+from typing import Optional, List, Union, Dict
+
+import torch
+import uvicorn
+import yaml
+from fastapi import FastAPI, Depends, HTTPException, routing
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
+
+class Server:
+
+    def __init__(self, args: Dict) -> None:
+        self.args = args
+        self.api_host = args['api_host'] if 'api_host' in args else '0.0.0.0'
+        self.api_port = args['api_port'] if 'api_port' in args else 6006
+        self.api_prefix = args['api_prefix'] if 'api_prefix' in args else ''
+        self.api_keys = args['api_keys'].split(",") if 'api_keys' in args and args['api_keys'] else None
+        self.log_config = getattr(self.args, "log_config", "config/log_uvicorn.yaml")
+        self.log_config = yaml.safe_load(Path(self.log_config).read_text())
+        self.app = FastAPI(lifespan=self.lifespan)
+        self.app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+
+    def instance(self):
+        return self.app
+
+    def arguments(self):
+        return self.args
+
+    def include_router(self, router: routing.APIRouter, tags: Optional[List[Union[str, Enum]]],) -> None:
+        self.app.include_router(router, prefix=self.api_prefix, tags=tags)
+
+    @staticmethod
+    def gc() -> None:
+        r"""
+        Collects GPU memory.
+        """
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.ipc_collect()
+
+    @asynccontextmanager
+    async def lifespan(self, app: "FastAPI"):  # collects GPU memory
+        yield
+        self.gc()
+
+    async def check_api_key(self,
+                            auth: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False)),):
+        if not self.api_keys:
+            # api_keys not set; allow all
+            return None
+        if auth is None or (token := auth.credentials) not in self.api_keys:
+            raise HTTPException(
+                status_code=401,
+                detail={
+                    "error": {
+                        "message": "",
+                        "type": "invalid_request_error",
+                        "param": None,
+                        "code": "invalid_api_key",
+                    }
+                },
+            )
+        return token
+
+    def run(self):
+        uvicorn.run(self.app, host=self.api_host, port=self.api_port, log_config=self.log_config)
