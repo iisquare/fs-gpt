@@ -10,7 +10,6 @@ export CUDA_VISIBLE_DEVICES=1
 nohup python -m sglang.launch_server --model-path ${MODEL_PATH} \
 --trust-remote-code \
 --tp 1 \
---mem_fraction_static 0.9 \
 --host 0.0.0.0 \
 --port 6011 \
 > ${PROJECT_ROOT}/logs/sglang.log 2>&1 &
