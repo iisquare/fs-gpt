@@ -19,3 +19,12 @@ pip install -e ".[torch, embedding, inference]"
 ```
 fs-gpt run examples/embedding.yaml
 ```
+
+## 相关参考
+
+### 参考项目
+
+- [xusenlinzy/api-for-open-llm](https://github.com/xusenlinzy/api-for-open-llm)
+- [hiyouga/LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory)
+
+### 参考文档
