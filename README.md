@@ -14,3 +14,8 @@ conda activate fs-gpt
 ```
 pip install -e ".[torch, embedding, inference]"
 ```
+
+- 运行服务
+```
+fs-gpt run examples/embedding.yaml
+```
