@@ -36,7 +36,7 @@ def create_router(app: Server, arg: RAGEmbedding) -> APIRouter:
                 decoding = tiktoken.model.encoding_for_model(request.model)
                 request.input = [decoding.decode(text) for text in request.input]
 
-        request.dimensions = request.dimensions or getattr(app.arguments(), "embedding_size", -1)
+        request.dimensions = request.dimensions or app.arguments().get("embedding_size", -1)
 
         return arg.encode(
             texts=request.input,
