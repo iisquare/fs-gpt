@@ -11,8 +11,9 @@ from fs_gpt.protocol.embedding import Embedding, CreateEmbeddingResponse, Usage
 class RAGEmbedding:
 
     def __init__(self, args: Dict) -> None:
-        self.batch_size = args['batch_size'] if 'batch_size' in args else 32
-        self.model = SentenceTransformer(args['model_name_or_path'], trust_remote_code=True,)
+        self.device = args.get("device")
+        self.batch_size = args.get("batch_size", 32)
+        self.model = SentenceTransformer(args['model_name_or_path'], trust_remote_code=True, device=self.device,)
 
     def encode(
         self,

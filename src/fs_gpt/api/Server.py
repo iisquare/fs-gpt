@@ -16,11 +16,11 @@ class Server:
 
     def __init__(self, args: Dict) -> None:
         self.args = args
-        self.api_host = args['api_host'] if 'api_host' in args else '0.0.0.0'
-        self.api_port = args['api_port'] if 'api_port' in args else 6006
-        self.api_prefix = args['api_prefix'] if 'api_prefix' in args else ''
+        self.api_host = args.get("api_host", "0.0.0.0")
+        self.api_port = args.get("api_port", 6006)
+        self.api_prefix = args.get("api_prefix", "")
         self.api_keys = args['api_keys'].split(",") if 'api_keys' in args and args['api_keys'] else None
-        self.log_config = getattr(self.args, "log_config", "config/log_uvicorn.yaml")
+        self.log_config = args.get("log_config", "config/log_uvicorn.yaml")
         self.log_config = yaml.safe_load(Path(self.log_config).read_text())
         self.app = FastAPI(lifespan=self.lifespan)
         self.app.add_middleware(
