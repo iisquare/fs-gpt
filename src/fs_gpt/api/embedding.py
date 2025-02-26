@@ -3,7 +3,7 @@ from typing import Dict
 
 from fastapi import APIRouter, Depends, status
 
-from fs_gpt.api.Server import Server
+from fs_gpt.core.Server import Server
 from fs_gpt.embedding.RAGEmbedding import RAGEmbedding
 from fs_gpt.protocol.embedding import EmbeddingCreateParams
 

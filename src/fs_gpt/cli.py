@@ -32,8 +32,8 @@ def run():
             args[name] = str(Path(args[name]).absolute())
     match args['action']:
         case 'embedding':
-            from fs_gpt.embedding import server
-            server.main(args)
+            from fs_gpt.api import embedding
+            embedding.main(args)
         case _:
             print(f"Unknown action: {args['action']}")
 
