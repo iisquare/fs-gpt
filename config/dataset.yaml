@@ -1,0 +1,5 @@
+news:
+  file: data/news.jsonl
+
+identity:
+  file: data/identity.jsonl
