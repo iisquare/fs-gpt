@@ -29,6 +29,7 @@ extra_require = {
     "torch": ["torch"],
     "embedding": ["sentence-transformers", "tiktoken"],
     "inference": ["vllm", "sgl-kernel", "sglang[all]"],
+    "gptq": ["gptqmodel"],
 }
 
 

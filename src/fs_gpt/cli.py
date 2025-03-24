@@ -34,6 +34,9 @@ def run():
         case 'embedding':
             from fs_gpt.api import embedding
             embedding.main(args)
+        case 'derive':
+            from fs_gpt.derive import derive
+            derive.main(args)
         case _:
             print(f"Unknown action: {args['action']}")
 
