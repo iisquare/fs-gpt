@@ -1,5 +1,6 @@
 news:
-  file: data/news.jsonl
+  filepath: data/news.jsonl
+  text_field: content
 
 identity:
-  file: data/identity.jsonl
+  filepath: data/identity.jsonl

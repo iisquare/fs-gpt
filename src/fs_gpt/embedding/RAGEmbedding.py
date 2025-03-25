@@ -13,7 +13,7 @@ class RAGEmbedding:
     def __init__(self, args: Dict) -> None:
         self.device = args.get("device")
         self.batch_size = args.get("batch_size", 32)
-        self.model = SentenceTransformer(args['model_name_or_path'], trust_remote_code=True, device=self.device,)
+        self.model = SentenceTransformer(args.get("model_name_or_path"), trust_remote_code=True, device=self.device,)
 
     def encode(
         self,

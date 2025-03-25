@@ -1,8 +1,11 @@
-from typing import Dict
+import re
+from typing import Dict, List, Union
 
 import torch
 from torch.utils.data import IterableDataset
 from torch.utils.data.dataset import _T_co
+
+from fs_gpt.data.DatasetConfig import DatasetConfig
 
 
 class JSONLStreamingDataset(IterableDataset):
@@ -10,13 +13,13 @@ class JSONLStreamingDataset(IterableDataset):
     def __getitem__(self, index) -> _T_co:
         pass
 
-    def __init__(self, dataset_names, tokenizer, dataset_config: Dict, arg: Dict):
+    def __init__(self, dataset_names: Union[str, List[str]], tokenizer, args: Dict):
         self.dataset_names = dataset_names
+        if isinstance(dataset_names, str):
+            self.dataset_names = [name.strip() for name in re.split(r'[,;\s]+', dataset_names) if name.strip()]
         self.tokenizer = tokenizer
-        self.block_size = arg.get("dataset_block_size", 1024)
-        self.overlap = arg.get("dataset_overlap", 0)
-        self.dataset_config = dataset_config
-        assert self.overlap < self.block_size, "Overlap must be less than block size"
+        self.dataset = DatasetConfig(args)
+
 
     def __iter__(self):
         worker_info = torch.utils.data.get_worker_info()
@@ -24,21 +27,18 @@ class JSONLStreamingDataset(IterableDataset):
 
         buffer = []
         for name in dataset_names:
-
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(self.dataset.path(name), 'r', encoding='utf-8') as f:
                 for line in f:
-                    line = line.strip()
+                    line = self.dataset.text(name, line.strip())
                     if not line:
                         continue
-
                     # Tokenize and add to buffer
                     tokens = self.tokenizer.encode(line, add_special_tokens=False)
                     buffer.extend(tokens)
-
                     # Yield blocks while buffer is sufficient
-                    while len(buffer) >= self.block_size:
-                        yield torch.tensor(buffer[:self.block_size], torch.long)
-                        buffer = buffer[self.block_size - self.overlap:]
+                    while len(buffer) >= self.dataset.block_size:
+                        yield torch.tensor(buffer[:self.dataset.block_size], torch.long)
+                        buffer = buffer[self.dataset.block_size - self.dataset.overlap:]
 
     def _split_files(self, worker_info):
         """分配文件给不同的worker"""
