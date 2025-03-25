@@ -35,7 +35,7 @@ fs-gpt run examples/derive_gptq.yaml
 - AWQ
 ```
 pip install autoawq
-pip install autoawq[cpu]
+export CUDA_VISIBLE_DEVICES=-1 # 禁用GPU，采用纯CPU方式量化
 export HF_ENDPOINT=https://hf-mirror.com # 用于下载校准数据集（calib_data, calibration dataset）
 fs-gpt run examples/derive_awq.yaml
 ```

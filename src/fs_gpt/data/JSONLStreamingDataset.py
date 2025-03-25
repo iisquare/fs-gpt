@@ -5,7 +5,7 @@ from torch.utils.data import IterableDataset
 from torch.utils.data.dataset import _T_co
 
 
-class StreamingJSONLDataset(IterableDataset):
+class JSONLStreamingDataset(IterableDataset):
 
     def __getitem__(self, index) -> _T_co:
         pass
