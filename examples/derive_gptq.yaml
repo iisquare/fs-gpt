@@ -3,4 +3,4 @@ model_name_or_path: models/Qwen2.5-0.5B-Instruct
 device: cpu
 derive_method: gptq
 quantization_bit: 8
-derive_dir: models/Qwen2.5-0.5B-Instruct-GPTQ-INT8
+derive_dir: models/Qwen2.5-0.5B-Instruct-GPTQ-Int8

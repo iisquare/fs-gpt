@@ -20,13 +20,21 @@ pip install -e ".[torch, embedding, inference]"
 ### 词向量
 
 ```
+pip install -e ".[embedding]"
 fs-gpt run examples/embedding.yaml
 ```
-### GPTQ量化
+### 量化
 
+- GPTQ
 ```
 pip install -e ".[gptq]"
 fs-gpt run examples/derive_gptq.yaml
+```
+- AWQ
+```
+pip install -e ".[awq]"
+export HF_ENDPOINT=https://hf-mirror.com # 用于下载校准数据集（calib_data, calibration dataset）
+fs-gpt run examples/derive_awq.yaml
 ```
 
 ## 开发计划

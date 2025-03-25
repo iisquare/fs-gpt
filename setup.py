@@ -30,6 +30,7 @@ extra_require = {
     "embedding": ["sentence-transformers", "tiktoken"],
     "inference": ["vllm", "sgl-kernel", "sglang[all]"],
     "gptq": ["gptqmodel"],
+    "awq": ["autoawq"],
 }
 
 

@@ -14,6 +14,8 @@ class Derive:
         match self.args['derive_method']:
             case 'gptq':
                 self.gptq()
+            case 'awq':
+                self.awq()
             case _:
                 print(f"Unknown derive_method: {self.args['derive_method']}")
 
@@ -26,28 +28,41 @@ class Derive:
                 "gptqmodel is an easy-to-use model quantization library with user-friendly apis, based on GPTQ algorithm."
             )
         ]
-
         quantize_config = QuantizeConfig(
             bits=self.args.get("quantization_bit", 4),  # quantize model to 4-bit
             group_size=128,  # it is recommended to set the value to 128
             device=self.device,
         )
 
-        print('load model...')
-
+        print(f"Load model from {self.args['model_name_or_path']}")
         model = GPTQModel.load(self.args["model_name_or_path"], quantize_config=quantize_config,)
-
-        print('quantize...')
-
+        print(f"Quantize with {len(examples)} examples")
         model.quantize(examples)
-
-        print('save...')
-
+        print(f"Save model to {self.derive_dir}")
         model.save(self.derive_dir, max_shard_size=f"{self.derive_size}GB",)
-
         tokenizer.save_pretrained(self.derive_dir)
+        print(f'Model is quantized and saved at "{self.derive_dir}"')
 
-        print('done.')
+    def awq(self):
+        from awq import AutoAWQForCausalLM
+
+        quant_config = {
+            "zero_point": True,
+            "q_group_size": 128,
+            "w_bit": self.derive_size
+        }
+
+        print(f"Load model from {self.args['model_name_or_path']}")
+        model = AutoAWQForCausalLM.from_pretrained(self.args['model_name_or_path'], device_map=self.device)
+        tokenizer = AutoTokenizer.from_pretrained(self.args['model_name_or_path'], trust_remote_code=True)
+
+        print(f"Quantize with config {quant_config}")
+        model.quantize(tokenizer, quant_config=quant_config)
+
+        print(f"Save model to {self.derive_dir}")
+        model.save_quantized(self.derive_dir, shard_size=f"{self.derive_size}GB",)
+        tokenizer.save_pretrained(self.derive_dir)
+        print(f'Model is quantized and saved at "{self.derive_dir}"')
 
 def main(args: Dict):
     Derive(args).generate()
