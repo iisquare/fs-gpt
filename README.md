@@ -12,6 +12,8 @@ conda activate fs-gpt
 
 - 安装项目
 ```
+pip install -e ".[all]"
+# 或手动指定依赖
 pip install -e ".[torch, embedding, inference]"
 ```
 
@@ -27,12 +29,13 @@ fs-gpt run examples/embedding.yaml
 
 - GPTQ
 ```
-pip install -e ".[gptq]"
+pip install gptqmodel
 fs-gpt run examples/derive_gptq.yaml
 ```
 - AWQ
 ```
-pip install -e ".[awq]"
+pip install autoawq
+pip install autoawq[cpu]
 export HF_ENDPOINT=https://hf-mirror.com # 用于下载校准数据集（calib_data, calibration dataset）
 fs-gpt run examples/derive_awq.yaml
 ```

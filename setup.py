@@ -26,13 +26,18 @@ def get_console_scripts() -> List[str]:
 
 
 extra_require = {
-    "torch": ["torch"],
+    "torch": ["torch", "torchvision", "torchaudio"],
     "embedding": ["sentence-transformers", "tiktoken"],
     "inference": ["vllm", "sgl-kernel", "sglang[all]"],
-    "gptq": ["gptqmodel"],
-    "awq": ["autoawq"],
 }
-
+extra_require["all"] = [
+    dependency
+    for extra_key, dependencies in extra_require.items()
+    if extra_key != "all"  # 排除 all 自身，避免循环
+    for dependency in dependencies
+]
+seen = set() # 去重
+extra_require["all"] = [dep for dep in extra_require["all"] if not (dep in seen or seen.add(dep))]
 
 def main():
     setup(
