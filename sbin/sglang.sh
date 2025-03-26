@@ -3,9 +3,9 @@
 # https://docs.sglang.ai/backend/server_arguments.html
 
 PROJECT_ROOT=$(dirname $(dirname $(readlink -f $0)))
-MODEL_PATH=${PROJECT_ROOT}/models/Qwen2.5-32B-Instruct-GPTQ-Int4
+MODEL_PATH=${PROJECT_ROOT}/models/Qwen2.5-0.5B
 
-export CUDA_VISIBLE_DEVICES=1
+export CUDA_VISIBLE_DEVICES=0
 
 nohup python -m sglang.launch_server --model-path ${MODEL_PATH} \
 --trust-remote-code \
