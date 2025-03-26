@@ -28,6 +28,7 @@ def get_console_scripts() -> List[str]:
 extra_require = {
     "torch": ["torch", "torchvision", "torchaudio"],
     "embedding": ["sentence-transformers", "tiktoken"],
+    "train": ["deepspeed", "mpi4py"],
     "inference": ["vllm", "sgl-kernel", "sglang[all]"],
 }
 extra_require["all"] = [

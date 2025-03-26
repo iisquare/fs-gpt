@@ -21,23 +21,22 @@ class JSONLStreamingDataset(IterableDataset):
         worker_info = torch.utils.data.get_worker_info()
         dataset_names = self._split_files(worker_info)
 
-        buffer = []
         for name in dataset_names:
             with open(self.dataset.path(name), 'r', encoding='utf-8') as f:
                 for line in f:
-                    if len(buffer) > 0:
-                        yield buffer
-                        buffer = []
                     line = self.dataset.text(name, line.strip())
                     if not line:
                         continue
-                    # Tokenize and add to buffer
-                    tokens = self.tokenizer.encode(line, add_special_tokens=True, return_tensors="pt",)
-                    buffer.extend(tokens)
-                    # Yield blocks while buffer is sufficient
-                    while len(buffer) >= self.dataset.block_size:
-                        yield buffer[:self.dataset.block_size]
-                        buffer = buffer[self.dataset.block_size - self.dataset.overlap:]
+                    for sample in self.dataset.split(line):
+                        encoding = self.tokenizer(sample, return_tensors="pt",)
+                        # 去掉 batch 维度
+                        input_ids = encoding["input_ids"].squeeze(0)
+                        attention_mask = encoding["attention_mask"].squeeze(0)
+                        yield {
+                            "input_ids": input_ids,
+                            "attention_mask": attention_mask,
+                            "labels": input_ids
+                        }
 
     def _split_files(self, worker_info):
         """分配文件给不同的worker"""

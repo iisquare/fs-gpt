@@ -29,7 +29,7 @@ class Tuner:
             output_dir=self.output_dir,
             logging_dir=self.output_dir,
             overwrite_output_dir=self.args.get("overwrite_output_dir", False),
-            num_train_epochs=self.args.get("num_train_epochs", 2),
+            num_train_epochs=self.args.get("num_train_epochs", 3.0),
             max_steps=self.max_steps,
             per_device_train_batch_size=self.args.get("per_device_train_batch_size", 1),
             learning_rate=self.args.get("learning_rate", 1e-5),
@@ -42,6 +42,7 @@ class Tuner:
             per_device_eval_batch_size=self.args.get("per_device_eval_batch_size", 1),
             evaluation_strategy=self.args.get("evaluation_strategy", "steps"),
             eval_steps=self.args.get("eval_steps", 500),
+            deepspeed=self.args.get("deepspeed"),
         )
         trainer = Trainer(
             model=model,

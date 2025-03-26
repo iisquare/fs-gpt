@@ -25,3 +25,15 @@ class DatasetConfig:
         if not data:
             return None
         return data.get(self.dataset[name]["text_field"])
+
+    def split(self, sample):
+        result = []
+        start = 0
+        end = self.block_size
+        length = len(sample)
+        while start < length:
+            chunk = sample[start:end]
+            result.append(chunk)
+            start += self.block_size - self.overlap
+            end = start + self.block_size
+        return result
