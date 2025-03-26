@@ -5,8 +5,8 @@ stage: pt
 fine_tuning: full
 deepspeed: config/ds_z3_config.json
 
-train_dataset_names: news
-eval_dataset_names: news
+train_dataset_names: news, wiki
+eval_dataset_names: wiki
 max_steps: 30
 
 output_dir: models/qwen-pt-full

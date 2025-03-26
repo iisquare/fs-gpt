@@ -1,3 +1,7 @@
+wiki:
+  filepath: data/wiki.jsonl
+  text_field: content
+
 news:
   filepath: data/news.jsonl
   text_field: content
