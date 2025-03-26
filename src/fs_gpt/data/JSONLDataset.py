@@ -23,7 +23,7 @@ class JSONLDataset(Dataset):
                     line = self.dataset.text(name, line.strip())
                     if not line:
                         continue
-                    tokens = self.tokenizer.encode(line, add_special_tokens=False)
+                    tokens = self.tokenizer.encode(line, add_special_tokens=True, return_tensors="pt",)
                     self.data.append(tokens)
 
     def __len__(self):

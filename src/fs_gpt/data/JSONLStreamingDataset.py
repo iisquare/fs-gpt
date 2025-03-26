@@ -25,15 +25,18 @@ class JSONLStreamingDataset(IterableDataset):
         for name in dataset_names:
             with open(self.dataset.path(name), 'r', encoding='utf-8') as f:
                 for line in f:
+                    if len(buffer) > 0:
+                        yield buffer
+                        buffer = []
                     line = self.dataset.text(name, line.strip())
                     if not line:
                         continue
                     # Tokenize and add to buffer
-                    tokens = self.tokenizer.encode(line, add_special_tokens=False)
+                    tokens = self.tokenizer.encode(line, add_special_tokens=True, return_tensors="pt",)
                     buffer.extend(tokens)
                     # Yield blocks while buffer is sufficient
                     while len(buffer) >= self.dataset.block_size:
-                        yield torch.tensor(buffer[:self.dataset.block_size], torch.long)
+                        yield buffer[:self.dataset.block_size]
                         buffer = buffer[self.dataset.block_size - self.dataset.overlap:]
 
     def _split_files(self, worker_info):

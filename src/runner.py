@@ -1,15 +1,27 @@
+import os
+import sys
 import unittest
+
+from fs_gpt import cli
 
 
 class Runner(unittest.TestCase):
 
-    def embedding(self):
+    @classmethod
+    def setUpClass(cls):
+        cwd = os.getcwd()
+        print(f'cwd: {cwd}')
+        cwd = os.path.dirname(cwd)
+        print(f'workdir: {cwd}')
+        os.chdir(cwd)
+
+    @classmethod
+    def tearDownClass(cls):
         pass
 
-
-def main():
-    pass
-
+    def test_train_pt_full(self):
+        sys.argv = ["fs-gpt", "run", "examples/train_pt_full.yaml"]
+        cli.main()
 
 if __name__ == '__main__':
-    main()
+    unittest.main()
