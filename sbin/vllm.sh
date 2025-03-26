@@ -7,7 +7,8 @@ MODEL_PATH=${PROJECT_ROOT}/models/Qwen2.5-0.5B
 
 export CUDA_VISIBLE_DEVICES=0
 
-nohup vllm serve ${MODEL_PATH} \
+cmd=$(cat <<- EOF
+vllm serve ${MODEL_PATH} \
 --served-model-name $(basename ${MODEL_PATH}) \
 --tensor-parallel-size 1 \
 --max-model-len 32768 \
@@ -15,5 +16,13 @@ nohup vllm serve ${MODEL_PATH} \
 --max-num-seqs 8 \
 --enforce-eager \
 --host 0.0.0.0 \
---port 6011 \
-> ${PROJECT_ROOT}/logs/vllm.log 2>&1 &
+--port 6011
+EOF
+)
+
+if [ "-d" = "$1" ]; then
+  echo "run in daemon model..."
+  cmd="nohup ${cmd} > ${PROJECT_ROOT}/logs/vllm.log 2>&1 &"
+fi
+
+eval $cmd
