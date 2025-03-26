@@ -3,15 +3,11 @@ from typing import Dict, List, Union
 
 import torch
 from torch.utils.data import IterableDataset
-from torch.utils.data.dataset import _T_co
 
 from fs_gpt.data.DatasetConfig import DatasetConfig
 
 
 class JSONLStreamingDataset(IterableDataset):
-
-    def __getitem__(self, index) -> _T_co:
-        pass
 
     def __init__(self, dataset_names: Union[str, List[str]], tokenizer, args: Dict):
         self.dataset_names = dataset_names

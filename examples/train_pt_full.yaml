@@ -7,5 +7,6 @@ deepspeed: config/ds_z3_config.json
 
 train_dataset_names: news
 eval_dataset_names: news
+max_steps: 100
 
 output_dir: models/qwen-pt-full

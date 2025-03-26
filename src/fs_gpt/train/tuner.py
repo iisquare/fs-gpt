@@ -14,15 +14,19 @@ class Tuner:
         self.output_dir = args.get("output_dir", f"logs/{(os.path.basename(self.model_name_or_path))}")
 
     def train(self) -> None:
+        print(f"Load model from {self.model_name_or_path}")
         model = AutoModelForCausalLM.from_pretrained(self.model_name_or_path)
         tokenizer = AutoTokenizer.from_pretrained(self.model_name_or_path)
+        print(f"Load train dataset with {self.args['train_dataset_names']}")
         train_dataset = JSONLStreamingDataset(self.args["train_dataset_names"], tokenizer=tokenizer, args=self.args,)
+        print(f"Load evaluate dataset with {self.args['eval_dataset_names']}")
         eval_dataset = JSONLDataset(self.args["eval_dataset_names"], tokenizer=tokenizer, args=self.args,)
         training_args = TrainingArguments(
             output_dir=self.output_dir,
             logging_dir=self.output_dir,
             overwrite_output_dir=self.args.get("overwrite_output_dir", False),
             num_train_epochs=self.args.get("num_train_epochs", 2),
+            max_steps=self.args.get("max_steps", -1),
             per_device_train_batch_size=self.args.get("per_device_train_batch_size", 1),
             learning_rate=self.args.get("learning_rate", 1e-5),
             lr_scheduler_type=self.args.get("lr_scheduler_type", "cosine"),
@@ -41,7 +45,14 @@ class Tuner:
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
         )
+        print(f"Train...")
         trainer.train()
+        print(f"Evaluate...")
+        trainer.evaluate()
+        print(f"Save model to {self.output_dir}")
+        model.save_pretrained(self.output_dir)
+        tokenizer.save_pretrained(self.output_dir)
+        print(f'Model saved at "{self.output_dir}"')
 
 def main(args: Dict):
     Tuner(args).train()
