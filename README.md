@@ -19,6 +19,16 @@ pip install -e ".[torch, embedding, inference]"
 
 ## 运行服务
 
+### 训练
+
+- 全参数微调（Full Parameter Fine-Tuning）
+```
+fs-gpt run examples/train_pt_full.yaml
+```
+- 部分参数微调（Partial Parameter Fine-Tuning）
+- LoRA（Low-Rank Adaptation）
+- QLoRA（Quantized Low-Rank Adaptation）
+
 ### 词向量
 
 ```

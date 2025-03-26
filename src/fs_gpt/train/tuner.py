@@ -3,6 +3,7 @@ from typing import Dict
 
 from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments
 
+from fs_gpt.data.JSONLDataset import JSONLDataset
 from fs_gpt.data.JSONLStreamingDataset import JSONLStreamingDataset
 
 
@@ -16,6 +17,7 @@ class Tuner:
         model = AutoModelForCausalLM.from_pretrained(self.model_name_or_path)
         tokenizer = AutoTokenizer.from_pretrained(self.model_name_or_path)
         train_dataset = JSONLStreamingDataset(self.args["train_dataset_names"], tokenizer=tokenizer, args=self.args,)
+        eval_dataset = JSONLDataset(self.args["eval_dataset_names"], tokenizer=tokenizer, args=self.args,)
         training_args = TrainingArguments(
             output_dir=self.output_dir,
             logging_dir=self.output_dir,
@@ -39,6 +41,7 @@ class Tuner:
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
         )
+        trainer.train()
 
 def main(args: Dict):
     Tuner(args).train()

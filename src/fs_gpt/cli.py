@@ -37,6 +37,9 @@ def run():
         case 'derive':
             from fs_gpt.derive import derive
             derive.main(args)
+        case 'train':
+            from fs_gpt.train import tuner
+            tuner.main(args)
         case _:
             print(f"Unknown action: {args['action']}")
 

@@ -21,7 +21,7 @@ class DatasetConfig:
         return str(Path(self.dataset[name]["filepath"]).absolute())
 
     def text(self, name: str, line: str) -> Any | None:
-        data = yaml.safe_load(Path(line).read_text())
+        data = yaml.safe_load(line)
         if not data:
             return None
         return data.get(self.dataset[name]["text_field"])
