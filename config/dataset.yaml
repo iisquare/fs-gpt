@@ -8,3 +8,5 @@ news:
 
 identity:
   filepath: data/identity.jsonl
+  input_field: input
+  output_field: output

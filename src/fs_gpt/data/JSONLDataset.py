@@ -23,7 +23,7 @@ class JSONLDataset(Dataset):
                     line = self.dataset.text(name, line.strip())
                     if not line:
                         continue
-                    self.data.append(line)
+                    self.data.extend(self.dataset.split(line))
 
     def __len__(self):
         return len(self.data)

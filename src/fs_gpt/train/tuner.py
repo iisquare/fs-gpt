@@ -13,11 +13,19 @@ class Tuner:
         self.model_name_or_path = args.get("model_name_or_path")
         self.output_dir = args.get("output_dir", f"logs/{(os.path.basename(self.model_name_or_path))}")
         self.max_steps = args.get("max_steps", -1)
+        self.fine_tuning = args.get("fine_tuning")
 
     def train(self) -> None:
         print(f"Load model from {self.model_name_or_path}")
         model = AutoModelForCausalLM.from_pretrained(self.model_name_or_path)
         tokenizer = AutoTokenizer.from_pretrained(self.model_name_or_path)
+        if self.fine_tuning == "freeze":
+            from torchinfo import summary
+            print(f"Freeze model parameters")
+            print(model)
+            summary(model=model)
+            for name, param in model.named_parameters():
+                print(f"{name}: requires_grad={param.requires_grad}")
         print(f"Load train dataset with {self.args['train_dataset_names']}")
         if self.max_steps == -1:
             train_dataset = JSONLDataset(self.args["train_dataset_names"], tokenizer=tokenizer, args=self.args,)
