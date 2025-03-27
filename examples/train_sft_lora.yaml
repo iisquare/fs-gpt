@@ -1,0 +1,12 @@
+action: train
+model_name_or_path: models/Qwen2.5-0.5B-Instruct
+
+stage: sft
+fine_tuning: lora
+deepspeed: config/ds_z3_config.json
+
+train_dataset_names: identity
+eval_dataset_names: identity
+max_steps: 30
+
+output_dir: models/qwen-sft-lora

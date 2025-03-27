@@ -1,10 +1,18 @@
 import os
-from typing import Dict
+from abc import abstractmethod
+from typing import Dict, Optional, Union, List, Any
 
-from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments
+from peft import LoraConfig, get_peft_model
+from torch.utils.data.dataset import Dataset, IterableDataset
+from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, BitsAndBytesConfig
 
+from fs_gpt.data.DatasetConfig import DatasetConfig
 from fs_gpt.data.JSONLDataset import JSONLDataset
 from fs_gpt.data.JSONLStreamingDataset import JSONLStreamingDataset
+from fs_gpt.train.pt.PtTuner import PtTuner
+from fs_gpt.train.rlhf.RlhfTuner import RlhfTuner
+from fs_gpt.train.sft.SftTuner import SftTuner
+from fs_gpt.utils import ModelUtil
 
 
 class Tuner:
@@ -14,60 +22,107 @@ class Tuner:
         self.output_dir = args.get("output_dir", f"logs/{(os.path.basename(self.model_name_or_path))}")
         self.max_steps = args.get("max_steps", -1)
         self.fine_tuning = args.get("fine_tuning")
+        self.quantization_method = args.get("quantization_method")
+        self.quantization_bit = args.get("quantization_bit", 4)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name_or_path)
 
     def train(self) -> None:
         print(f"Load model from {self.model_name_or_path}")
-        model = AutoModelForCausalLM.from_pretrained(self.model_name_or_path)
-        tokenizer = AutoTokenizer.from_pretrained(self.model_name_or_path)
-        if self.fine_tuning == "freeze":
-            from torchinfo import summary
-            print(f"Freeze model parameters")
-            print(model)
-            summary(model=model)
-            for name, param in model.named_parameters():
-                print(f"{name}: requires_grad={param.requires_grad}")
+        model = self.model()
+        model.config.use_cache = self.args.get("use_cache", True) # 可通过禁用KVCache节省显存
         print(f"Load train dataset with {self.args['train_dataset_names']}")
         if self.max_steps == -1:
-            train_dataset = JSONLDataset(self.args["train_dataset_names"], tokenizer=tokenizer, args=self.args,)
-        else:
-            train_dataset = JSONLStreamingDataset(self.args["train_dataset_names"], tokenizer=tokenizer, args=self.args)
+            train_dataset = JSONLDataset(self.args["train_dataset_names"], tokenize=self.sample, args=self.args,)
+        else: # 流式加载数据，必须指定max_steps最大步长
+            train_dataset = JSONLStreamingDataset(self.args["train_dataset_names"], tokenize=self.sample, args=self.args)
         print(f"Load evaluate dataset with {self.args['eval_dataset_names']}")
-        eval_dataset = JSONLDataset(self.args["eval_dataset_names"], tokenizer=tokenizer, args=self.args,)
-        training_args = TrainingArguments(
-            output_dir=self.output_dir,
-            logging_dir=self.output_dir,
-            do_train=self.args.get("do_train", True),
-            do_eval=self.args.get("do_eval", True),
-            overwrite_output_dir=self.args.get("overwrite_output_dir", False),
-            num_train_epochs=self.args.get("num_train_epochs", 3.0),
-            max_steps=self.max_steps,
-            per_device_train_batch_size=self.args.get("per_device_train_batch_size", 1),
-            learning_rate=self.args.get("learning_rate", 1e-5),
-            lr_scheduler_type=self.args.get("lr_scheduler_type", "cosine"),
-            warmup_ratio=self.args.get("warmup_ratio", 0.1),
-            bf16=self.args.get("bf16", True),
-            ddp_timeout=self.args.get("ddp_timeout", 1800),
-            save_steps=self.args.get("save_steps", 500),
-            logging_steps=self.args.get("logging_steps", 10),
-            per_device_eval_batch_size=self.args.get("per_device_eval_batch_size", 1),
-            eval_strategy=self.args.get("eval_strategy", "steps"),
-            eval_steps=self.args.get("eval_steps", 500),
-            deepspeed=self.args.get("deepspeed"),
-        )
-        trainer = Trainer(
-            model=model,
-            args=training_args,
-            train_dataset=train_dataset,
-            eval_dataset=eval_dataset,
-        )
+        eval_dataset = JSONLDataset(self.args["eval_dataset_names"], tokenize=self.sample, args=self.args,)
+
+        match self.fine_tuning:
+            case "freeze": # 暂未支持，仅打印模型结构
+                from torchinfo import summary
+                print(f"Freeze model parameters")
+                print(model)
+                summary(model=model)
+                for name, param in model.named_parameters():
+                    print(f"{name}: requires_grad={param.requires_grad}")
+            case ["lora"]:
+                target_modules = ModelUtil.find_all_linear_modules(model, self.args.get("freeze_vision_tower", True))
+                lora_config = LoraConfig(
+                    r=self.args.get("lora_rank", 8),  # 低秩矩阵的秩
+                    lora_alpha=self.args.get("lora_alpha", 8),  # 缩放因子
+                    target_modules=target_modules,  # 目标模块
+                    lora_dropout=self.args.get("lora_dropout", 0.0),
+                )
+                print(f"Patch lora config: {lora_config}")
+                # 应用LoRA到模型
+                model = get_peft_model(model, lora_config)
         print(f"Train...")
+        trainer = self.trainer(model, train_dataset=train_dataset, eval_dataset=eval_dataset,)
         trainer.train()
         print(f"Evaluate...")
         trainer.evaluate()
         print(f"Save model to {self.output_dir}")
         model.save_pretrained(self.output_dir)
-        tokenizer.save_pretrained(self.output_dir)
+        self.tokenizer.save_pretrained(self.output_dir)
         print(f'Model saved at "{self.output_dir}"')
 
+    def model(self):
+        match self.quantization_method:
+            case "bitsandbytes":
+                match self.quantization_bit:
+                    case 4:
+                        quantization_config = BitsAndBytesConfig(
+                            load_in_4bit=True,
+                            bnb_4bit_compute_dtype=self.args.get("bnb_4bit_compute_dtype"),
+                            bnb_4bit_use_double_quant=self.args.get("bnb_4bit_use_double_quant", False),
+                            bnb_4bit_quant_type=self.args.get("bnb_4bit_quant_type", "fp4"),
+                            bnb_4bit_quant_storage=self.args.get("bnb_4bit_quant_storage"),
+                        )
+                    case 8:
+                        quantization_config = BitsAndBytesConfig(
+                            load_in_8bit=True,
+                        )
+                    case _:
+                        raise Exception(
+                            f"Bitsandbytes only accepts 4-bit or 8-bit quantization, but got {self.quantization_bit}")
+                        # 加载量化模型
+                print(f"Quantization config: {quantization_config}")
+                model = AutoModelForCausalLM.from_pretrained(
+                    self.model_name_or_path,
+                    quantization_config=quantization_config,
+                    device_map=self.args.get("device_map", "auto"),
+                )
+            case _:
+                model = AutoModelForCausalLM.from_pretrained(
+                    self.model_name_or_path,
+                    device_map=self.args.get("device_map", "auto"),
+                )
+        return model
+
+    @abstractmethod
+    def trainer(
+            self,
+            model,
+            train_dataset: Optional[Union[Dataset, IterableDataset]] = None,
+            eval_dataset: Optional[Union[Dataset, Dict[str, Dataset]]] = None,
+    ) -> Trainer:
+        pass
+
+    @abstractmethod
+    def sample(self, dataset: DatasetConfig, line: str) -> List[Any]:
+        pass
+
 def main(args: Dict):
-    Tuner(args).train()
+    match args.get("stage"):
+        case "pt":
+            tuner = PtTuner(args)
+            pass
+        case "sft":
+            tuner = SftTuner(args)
+            pass
+        case "rlhf":
+            tuner = RlhfTuner(args)
+        case _:
+            raise Exception(f"Unknown stage: {args.get('stage')}")
+    tuner.train()
