@@ -1,6 +1,7 @@
 import re
 from typing import Dict, List, Union, TYPE_CHECKING
 
+import datasets
 from torch.utils.data.dataset import Dataset
 
 from fs_gpt.data.DatasetConfig import DatasetConfig
@@ -33,3 +34,6 @@ class JSONLDataset(Dataset):
     def __getitem__(self, idx):
         sample = self.data[idx]
         return sample
+
+    def datasets(self) -> datasets.Dataset:
+        return datasets.Dataset.from_list(self.data)

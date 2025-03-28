@@ -1,7 +1,8 @@
 from typing import Optional, Union, Dict, List, Any
 
 from torch.utils.data.dataset import Dataset, IterableDataset
-from transformers import TrainingArguments, Trainer
+from transformers import Trainer
+from trl import SFTConfig, SFTTrainer
 
 from fs_gpt.data.DatasetConfig import DatasetConfig
 from fs_gpt.train.tuner import Tuner
@@ -20,14 +21,7 @@ class SftTuner(Tuner):
             "content": sample["output"],
         }]
         example = self.tokenizer.apply_chat_template(conversation)
-        encoding = self.tokenizer(example, return_tensors="pt", )
-        input_ids = encoding["input_ids"].squeeze(0)
-        attention_mask = encoding["attention_mask"].squeeze(0)
-        return [{
-            "input_ids": input_ids,
-            "attention_mask": attention_mask,
-            "labels": input_ids
-        }]
+        return [example]
 
     def trainer(
             self,
@@ -35,7 +29,7 @@ class SftTuner(Tuner):
             train_dataset: Optional[Union[Dataset, IterableDataset]] = None,
             eval_dataset: Optional[Union[Dataset, Dict[str, Dataset]]] = None,
     ) -> Trainer:
-        training_args = TrainingArguments(
+        training_args = SFTConfig(
             output_dir=self.output_dir,
             logging_dir=self.output_dir,
             do_train=self.args.get("do_train", True),
@@ -56,7 +50,7 @@ class SftTuner(Tuner):
             eval_steps=self.args.get("eval_steps", 500),
             deepspeed=self.args.get("deepspeed"),
         )
-        return Trainer(
+        return SFTTrainer(
             model=model,
             args=training_args,
             train_dataset=train_dataset,

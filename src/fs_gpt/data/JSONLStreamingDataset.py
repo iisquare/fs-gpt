@@ -1,6 +1,7 @@
 import re
 from typing import Dict, List, Union, TYPE_CHECKING
 
+import datasets
 import torch
 from torch.utils.data import IterableDataset
 
@@ -40,3 +41,6 @@ class JSONLStreamingDataset(IterableDataset):
         start = worker_id * per_worker
         end = start + per_worker if worker_id < worker_info.num_workers - 1 else None
         return self.dataset_names[start:end]
+
+    def datasets(self) -> datasets.IterableDataset:
+        return datasets.Dataset.from_generator(self.__iter__)
