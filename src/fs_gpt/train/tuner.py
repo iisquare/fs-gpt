@@ -9,9 +9,6 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, BitsAndBy
 from fs_gpt.data.DatasetConfig import DatasetConfig
 from fs_gpt.data.JSONLDataset import JSONLDataset
 from fs_gpt.data.JSONLStreamingDataset import JSONLStreamingDataset
-from fs_gpt.train.pt.PtTuner import PtTuner
-from fs_gpt.train.rlhf.RlhfTuner import RlhfTuner
-from fs_gpt.train.sft.SftTuner import SftTuner
 from fs_gpt.utils import ModelUtil
 
 
@@ -32,11 +29,11 @@ class Tuner:
         model.config.use_cache = self.args.get("use_cache", True) # 可通过禁用KVCache节省显存
         print(f"Load train dataset with {self.args['train_dataset_names']}")
         if self.max_steps == -1:
-            train_dataset = JSONLDataset(self.args["train_dataset_names"], tokenize=self.sample, args=self.args,)
+            train_dataset = JSONLDataset(self.args["train_dataset_names"], tuner=self, args=self.args,)
         else: # 流式加载数据，必须指定max_steps最大步长
-            train_dataset = JSONLStreamingDataset(self.args["train_dataset_names"], tokenize=self.sample, args=self.args)
+            train_dataset = JSONLStreamingDataset(self.args["train_dataset_names"], tuner=self, args=self.args)
         print(f"Load evaluate dataset with {self.args['eval_dataset_names']}")
-        eval_dataset = JSONLDataset(self.args["eval_dataset_names"], tokenize=self.sample, args=self.args,)
+        eval_dataset = JSONLDataset(self.args["eval_dataset_names"], tuner=self, args=self.args,)
 
         match self.fine_tuning:
             case "freeze": # 暂未支持，仅打印模型结构
@@ -116,12 +113,15 @@ class Tuner:
 def main(args: Dict):
     match args.get("stage"):
         case "pt":
+            from fs_gpt.train.pt.PtTuner import PtTuner
             tuner = PtTuner(args)
             pass
         case "sft":
+            from fs_gpt.train.sft.SftTuner import SftTuner
             tuner = SftTuner(args)
             pass
         case "rlhf":
+            from fs_gpt.train.rlhf.RlhfTuner import RlhfTuner
             tuner = RlhfTuner(args)
         case _:
             raise Exception(f"Unknown stage: {args.get('stage')}")

@@ -10,9 +10,8 @@ from fs_gpt.train.tuner import Tuner
 
 class RlhfTuner(Tuner):
     def sample(self, dataset: DatasetConfig, line: str) -> List[Any]:
-        return [
-            dataset.rlhf(line),
-        ]
+        sample = dataset.rlhf(line)
+        return [sample] if sample else []
 
     def trainer(
             self,

@@ -23,5 +23,9 @@ class Runner(unittest.TestCase):
         sys.argv = ["fs-gpt", "run", "examples/train_pt_full.yaml"]
         cli.main()
 
+    def test_train_sft_lora(self):
+        sys.argv = ["fs-gpt", "run", "examples/train_sft_lora.yaml"]
+        cli.main()
+
 if __name__ == '__main__':
     unittest.main()

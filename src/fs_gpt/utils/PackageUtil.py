@@ -1,11 +1,7 @@
 import importlib.metadata
 import importlib.util
-from typing import TYPE_CHECKING
 
 from packaging import version
-
-if TYPE_CHECKING:
-    from packaging.version import Version
 
 
 class PackageUtil:
@@ -14,5 +10,5 @@ class PackageUtil:
         return importlib.util.find_spec(name) is not None
 
     @staticmethod
-    def version(name: str) -> Version:
+    def version(name: str) -> version.Version:
         return version.parse(importlib.metadata.version(name))

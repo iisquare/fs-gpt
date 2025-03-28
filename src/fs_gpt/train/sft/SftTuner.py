@@ -10,6 +10,8 @@ from fs_gpt.train.tuner import Tuner
 class SftTuner(Tuner):
     def sample(self, dataset: DatasetConfig, line: str) -> List[Any]:
         sample = dataset.sft(line)
+        if not sample:
+            return []
         conversation = [{
             "role": "user",
             "content": sample["input"],
