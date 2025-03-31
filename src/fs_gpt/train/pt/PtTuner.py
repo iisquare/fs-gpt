@@ -1,9 +1,10 @@
-from typing import Optional, Union, Dict, List, Any
+from typing import Optional, Union, List, Any
 
-from torch.utils.data.dataset import Dataset, IterableDataset
 from transformers import TrainingArguments, Trainer
 
 from fs_gpt.data.DatasetConfig import DatasetConfig
+from fs_gpt.data.JSONLDataset import JSONLDataset
+from fs_gpt.data.JSONLStreamingDataset import JSONLStreamingDataset
 from fs_gpt.train.tuner import Tuner
 
 
@@ -26,8 +27,8 @@ class PtTuner(Tuner):
     def trainer(
             self,
             model,
-            train_dataset: Optional[Union[Dataset, IterableDataset]] = None,
-            eval_dataset: Optional[Union[Dataset, Dict[str, Dataset]]] = None,
+            train_dataset: Optional[Union[JSONLDataset, JSONLStreamingDataset]] = None,
+            eval_dataset: Optional[Union[JSONLDataset, JSONLStreamingDataset]] = None,
     ) -> Trainer:
         training_args = TrainingArguments(
             output_dir=self.output_dir,

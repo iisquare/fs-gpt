@@ -3,7 +3,6 @@ from abc import abstractmethod
 from typing import Dict, Optional, Union, List, Any
 
 from peft import LoraConfig, get_peft_model
-from torch.utils.data.dataset import Dataset, IterableDataset
 from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, BitsAndBytesConfig
 
 from fs_gpt.data.DatasetConfig import DatasetConfig
@@ -101,8 +100,8 @@ class Tuner:
     def trainer(
             self,
             model,
-            train_dataset: Optional[Union[Dataset, IterableDataset]] = None,
-            eval_dataset: Optional[Union[Dataset, Dict[str, Dataset]]] = None,
+            train_dataset: Optional[Union[JSONLDataset, JSONLStreamingDataset]] = None,
+            eval_dataset: Optional[Union[JSONLDataset, JSONLStreamingDataset]] = None,
     ) -> Trainer:
         pass
 

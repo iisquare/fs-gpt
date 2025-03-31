@@ -1,10 +1,11 @@
-from typing import Optional, Union, Dict, List, Any
+from typing import Optional, Union, List, Any
 
-from torch.utils.data.dataset import Dataset, IterableDataset
 from transformers import Trainer
 from trl import SFTConfig, SFTTrainer
 
 from fs_gpt.data.DatasetConfig import DatasetConfig
+from fs_gpt.data.JSONLDataset import JSONLDataset
+from fs_gpt.data.JSONLStreamingDataset import JSONLStreamingDataset
 from fs_gpt.train.tuner import Tuner
 
 
@@ -13,21 +14,22 @@ class SftTuner(Tuner):
         sample = dataset.sft(line)
         if not sample:
             return []
-        conversation = [{
+        messages = [{
             "role": "user",
             "content": sample["input"],
         }, {
             "role": "assistant",
             "content": sample["output"],
         }]
-        example = self.tokenizer.apply_chat_template(conversation)
-        return [example]
+        return [{
+            "messages": messages
+        }]
 
     def trainer(
             self,
             model,
-            train_dataset: Optional[Union[Dataset, IterableDataset]] = None,
-            eval_dataset: Optional[Union[Dataset, Dict[str, Dataset]]] = None,
+            train_dataset: Optional[Union[JSONLDataset, JSONLStreamingDataset]] = None,
+            eval_dataset: Optional[Union[JSONLDataset, JSONLStreamingDataset]] = None,
     ) -> Trainer:
         training_args = SFTConfig(
             output_dir=self.output_dir,
@@ -53,6 +55,6 @@ class SftTuner(Tuner):
         return SFTTrainer(
             model=model,
             args=training_args,
-            train_dataset=train_dataset,
-            eval_dataset=eval_dataset,
+            train_dataset=train_dataset.datasets(),
+            eval_dataset=eval_dataset.datasets(),
         )
