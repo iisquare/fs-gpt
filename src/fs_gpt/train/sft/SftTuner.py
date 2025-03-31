@@ -11,6 +11,12 @@ from fs_gpt.train.tuner import Tuner
 
 class SftTuner(Tuner):
     def sample(self, dataset: DatasetConfig, line: str) -> List[Any]:
+        """
+        The format of the samples can be either:
+        Standard: Each sample contains plain text.
+        Conversational: Each sample contains structured messages (e.g., role and content).
+        @see(https://huggingface.co/docs/trl/main/en/sft_trainer#trl.SFTTrainer)
+        """
         sample = dataset.sft(line)
         if not sample:
             return []
@@ -57,4 +63,5 @@ class SftTuner(Tuner):
             args=training_args,
             train_dataset=train_dataset.datasets(),
             eval_dataset=eval_dataset.datasets(),
+            processing_class=self.tokenizer
         )
