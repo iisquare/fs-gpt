@@ -9,5 +9,6 @@ deepspeed: config/ds_z3_config.json
 train_dataset_names: identity
 eval_dataset_names: identity
 max_steps: 30
+learning_rate: 1.0e-4
 
 output_dir: models/qwen-rlhf-qlora
