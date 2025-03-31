@@ -42,7 +42,7 @@ class Tuner:
                 summary(model=model)
                 for name, param in model.named_parameters():
                     print(f"{name}: requires_grad={param.requires_grad}")
-            case ["lora"]:
+            case "lora":
                 target_modules = ModelUtil.find_all_linear_modules(model, self.args.get("freeze_vision_tower", True))
                 lora_config = LoraConfig(
                     r=self.args.get("lora_rank", 8),  # 低秩矩阵的秩
