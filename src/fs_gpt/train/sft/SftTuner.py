@@ -50,6 +50,7 @@ class SftTuner(Tuner):
             lr_scheduler_type=self.args.get("lr_scheduler_type", "cosine"),
             warmup_ratio=self.args.get("warmup_ratio", 0.1),
             bf16=self.args.get("bf16", True),
+            fp16=self.args.get("fp16", False),
             ddp_timeout=self.args.get("ddp_timeout", 1800),
             save_steps=self.args.get("save_steps", 500),
             logging_steps=self.args.get("logging_steps", 10),
