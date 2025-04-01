@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Dict
 
 import sentencepiece
+from transformers import AutoTokenizer
 
 
 class Vocab:
@@ -10,15 +11,15 @@ class Vocab:
         self.args = args
         self.stage = args.get("stage")
         self.output_dir = args.get("output_dir", f"logs/vocab")
-        if not os.path.exists(self.output_dir):
-            os.makedirs(self.output_dir)
-        self.model_prefix = str(Path(self.output_dir).joinpath("tokenizer").absolute())
 
     def train(self):
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
+        model_prefix = str(Path(self.output_dir).joinpath("tokenizer").absolute())
         sentencepiece.SentencePieceTrainer.Train(
             input=self.args.get("input"),
             input_format=self.args.get("input_format", ""),
-            model_prefix=self.model_prefix,
+            model_prefix=model_prefix,
             # 训练语料内容的长度，不能少于词表大小，提示Vocabulary size too high异常
             vocab_size=self.args.get("vocab_size", 512),
             # 指定模型所支持的语言列表，语言代码是ISO639标准定义的缩写，如"en,zh"
@@ -34,12 +35,16 @@ class Vocab:
             model_type=self.args.get("model_type", "bpe"),
         )
 
+    def append(self):
+        AutoTokenizer.from_pretrained(self.args.get("model_name_or_path"))
+        processor = sentencepiece.SentencePieceProcessor()
+
     def piece(self):
         match self.stage:
             case "train":
                 self.train()
             case "append":
-                pass
+                self.append()
             case "tokenize":
                 pass
             case _:
