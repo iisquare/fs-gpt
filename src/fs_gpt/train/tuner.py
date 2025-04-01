@@ -1,4 +1,5 @@
 import os
+import math
 from abc import abstractmethod
 from typing import Dict, Optional, Union, List, Any
 
@@ -8,7 +9,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, BitsAndBy
 from fs_gpt.data.DatasetConfig import DatasetConfig
 from fs_gpt.data.JSONLDataset import JSONLDataset
 from fs_gpt.data.JSONLStreamingDataset import JSONLStreamingDataset
-from fs_gpt.utils import ModelUtil
+from fs_gpt.utils import ModelUtil, PlotUtil
 
 
 class Tuner:
@@ -55,13 +56,26 @@ class Tuner:
                 model = get_peft_model(model, lora_config)
         print(f"Train...")
         trainer = self.trainer(model, train_dataset=train_dataset, eval_dataset=eval_dataset,)
-        trainer.train()
+        if trainer.args.do_train:
+            result = trainer.train(resume_from_checkpoint=trainer.args.resume_from_checkpoint)
+            trainer.log_metrics("train", result.metrics)
+            trainer.save_metrics("train", result.metrics)
+            trainer.save_state()
+            if trainer.is_world_process_zero():
+                PlotUtil.plot_loss(trainer.args.output_dir, keys=["loss", "eval_loss"])
         print(f"Evaluate...")
-        trainer.evaluate()
+        if trainer.args.do_eval:
+            metrics = trainer.evaluate(metric_key_prefix="eval")
+            try:
+                perplexity = math.exp(metrics["eval_loss"])
+            except OverflowError:
+                perplexity = float("inf")
+            metrics["perplexity"] = perplexity
+            trainer.log_metrics("eval", metrics)
+            trainer.save_metrics("eval", metrics)
         print(f"Save model to {self.output_dir}")
-        model.save_pretrained(self.output_dir)
-        self.tokenizer.save_pretrained(self.output_dir)
-        print(f'Model saved at "{self.output_dir}"')
+        trainer.save_model()
+        print(f'Done.')
 
     def model(self):
         match self.quantization_method:

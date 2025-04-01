@@ -35,6 +35,7 @@ class PtTuner(Tuner):
             logging_dir=self.output_dir,
             do_train=self.args.get("do_train", True),
             do_eval=self.args.get("do_eval", True),
+            resume_from_checkpoint=self.args.get("resume_from_checkpoint"),
             overwrite_output_dir=self.args.get("overwrite_output_dir", False),
             num_train_epochs=self.args.get("num_train_epochs", 3.0),
             max_steps=self.max_steps,
@@ -48,8 +49,8 @@ class PtTuner(Tuner):
             save_steps=self.args.get("save_steps", 500),
             logging_steps=self.args.get("logging_steps", 10),
             per_device_eval_batch_size=self.args.get("per_device_eval_batch_size", 1),
-            eval_strategy=self.args.get("eval_strategy", "steps"),
-            eval_steps=self.args.get("eval_steps", 500),
+            eval_strategy=self.args.get("eval_strategy", "no"),
+            eval_steps=self.args.get("eval_steps", None),
             deepspeed=self.args.get("deepspeed"),
         )
         return Trainer(
