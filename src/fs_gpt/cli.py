@@ -40,6 +40,9 @@ def run():
         case 'train':
             from fs_gpt.train import tuner
             tuner.main(args)
+        case 'vocab':
+            from fs_gpt.vocab import vocab
+            vocab.main(args)
         case _:
             print(f"Unknown action: {args['action']}")
 
