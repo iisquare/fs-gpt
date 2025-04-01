@@ -1,6 +1,10 @@
 from typing import Dict
 
+from peft import PeftModel
 from transformers import AutoTokenizer
+
+from fs_gpt.train.tuner import Tuner
+
 
 class Derive:
     def __init__(self, args: Dict) -> None:
@@ -14,12 +18,32 @@ class Derive:
 
     def generate(self):
         match self.derive_method:
+            case 'lora':
+                self.lora()
             case 'gptq':
                 self.gptq()
             case 'awq':
                 self.awq()
             case _:
                 print(f"Unknown derive_method: {self.derive_method}")
+        print(f"Done.")
+
+    def lora(self):
+        print(f"Load model from {self.model_name_or_path}")
+        tuner = Tuner(self.args)
+        model = tuner.model()
+        lora_path = self.args.get("lora_path")
+        print(f"Loading the LoRA adapter from {lora_path}")
+        lora_model = PeftModel.from_pretrained(
+            model,
+            lora_path,
+            torch_device=self.args.get("device"),
+        )
+        print(f"Applying the LoRA")
+        model = lora_model.merge_and_unload()
+        print(f"Saving the target model to {self.derive_dir}")
+        model.save_pretrained(self.derive_dir, max_shard_size=f"{self.derive_size}GB",)
+        tuner.tokenizer.save_pretrained(self.derive_dir)
 
     def gptq(self):
         from gptqmodel import GPTQModel, QuantizeConfig
@@ -43,7 +67,6 @@ class Derive:
         print(f"Save model to {self.derive_dir}")
         model.save(self.derive_dir, max_shard_size=f"{self.derive_size}GB",)
         tokenizer.save_pretrained(self.derive_dir)
-        print(f'Model is quantized and saved at "{self.derive_dir}"')
 
     def awq(self):
         from awq import AutoAWQForCausalLM
@@ -64,7 +87,6 @@ class Derive:
         print(f"Save model to {self.derive_dir}")
         model.save_quantized(self.derive_dir, shard_size=f"{self.derive_size}GB",)
         tokenizer.save_pretrained(self.derive_dir)
-        print(f'Model is quantized and saved at "{self.derive_dir}"')
 
 def main(args: Dict):
     Derive(args).generate()
