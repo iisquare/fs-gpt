@@ -1,7 +1,0 @@
-action: vocab
-stage: append
-
-model_name_or_path: models/Qwen2.5-0.5B-Instruct
-vocab_model_file_path: models/vocab-train/tokenizer.model
-
-output_dir: models/vocab-append

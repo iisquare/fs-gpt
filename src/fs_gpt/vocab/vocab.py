@@ -3,7 +3,8 @@ from pathlib import Path
 from typing import Dict
 
 import sentencepiece
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, LlamaTokenizer
+from transformers.utils.sentencepiece_model_pb2 import ModelProto
 
 
 class Vocab:
@@ -35,18 +36,78 @@ class Vocab:
             model_type=self.args.get("model_type", "bpe"),
         )
 
-    def append(self):
-        AutoTokenizer.from_pretrained(self.args.get("model_name_or_path"))
+    def expansion(self):
+        print(f"load model tokenizer from {self.args.get('model_name_or_path')}")
+        tokenizer = AutoTokenizer.from_pretrained(self.args.get("model_name_or_path"))
+        if not isinstance(tokenizer, LlamaTokenizer):
+            print(f"https://github.com/QwenLM/Qwen/blob/main/tokenization_note.md#vocabulary-expansion")
+            return
+        model_spm = ModelProto()
+        model_spm.ParseFromString(tokenizer.sp_model.serialized_model_proto())
+
+        print(f"load processor tokenizer from {self.args.get('tokenizer_path')}")
         processor = sentencepiece.SentencePieceProcessor()
+        processor.Load(self.args.get("tokenizer_path"))
+        processor_spm = ModelProto()
+        processor_spm.ParseFromString(processor.serialized_model_proto())
+
+        # print number of tokens
+        print(f"tokenizer length: {len(tokenizer)}, processor length: {len(processor)}")
+        print(f"tokenizer.all_special_tokens: {tokenizer.all_special_tokens}")
+        print(f"tokenizer.all_special_ids: {tokenizer.all_special_ids}")
+        print(f"tokenizer.special_tokens_map: {tokenizer.special_tokens_map}")
+
+        # Add tokens to model tokenizer
+        spm_tokens_set = set(p.piece for p in model_spm.pieces)
+        print(f"spm_tokens_set length: {len(spm_tokens_set)}")
+        print(f"model pieces length before: {len(model_spm.pieces)}")
+        for p in processor_spm.pieces:
+            piece = p.piece
+            if piece not in spm_tokens_set:
+                new_p = ModelProto().SentencePiece()
+                new_p.piece = piece
+                new_p.score = 0
+                model_spm.pieces.append(new_p)
+        print(f"model pieces length after: {len(model_spm.pieces)}")
+        # Save
+        print(f"save tokenizer to {self.output_dir}")
+        tokenizer.save_pretrained(self.output_dir)
+        tokenizer_path = str(Path(self.output_dir).joinpath("tokenizer_expansion.model").absolute())
+        with open(tokenizer_path, 'wb') as f:
+            f.write(model_spm.SerializeToString())
+        print(f"Done.")
+
+    def tokenize(self):
+        print(f"load model tokenizer from {self.args.get('model_name_or_path')}")
+        tokenizer = AutoTokenizer.from_pretrained(self.args.get("model_name_or_path"))
+        # print number of tokens
+        print(f"tokenizer length: {len(tokenizer)}")
+        print(f"tokenizer.all_special_tokens: {tokenizer.all_special_tokens}")
+        print(f"tokenizer.all_special_ids: {tokenizer.all_special_ids}")
+        print(f"tokenizer.special_tokens_map: {tokenizer.special_tokens_map}")
+        while True:
+            text = input("Input: ")
+            if not text:
+                break
+            result = tokenizer(text)
+            print(f"tokenizer: {result}")
+            input_ids = result["input_ids"]
+            print(f"decode input_ids: {tokenizer.decode(input_ids)}")
+            print(f"convert_ids_to_tokens: {tokenizer.convert_ids_to_tokens(input_ids)}")
+            tokens = tokenizer.tokenize(text)
+            print(f"tokenize: {tokens}")
+            print(f"text length: {len(text)}")
+            print(f"tokenize length: {len(tokens)}")
+        print(f"Bye!")
 
     def piece(self):
         match self.stage:
             case "train":
                 self.train()
-            case "append":
-                self.append()
+            case "expansion":
+                self.expansion()
             case "tokenize":
-                pass
+                self.tokenize()
             case _:
                 raise Exception(f"Unknown stage: {self.stage}")
 

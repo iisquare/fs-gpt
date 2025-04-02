@@ -27,5 +27,9 @@ class Runner(unittest.TestCase):
         sys.argv = ["fs-gpt", "run", "examples/train_sft_lora.yaml"]
         cli.main()
 
+    def test_vocab_append(self):
+        sys.argv = ["fs-gpt", "run", "examples/vocab_append.yaml"]
+        cli.main()
+
 if __name__ == '__main__':
     unittest.main()
