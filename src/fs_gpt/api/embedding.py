@@ -8,7 +8,7 @@ from fs_gpt.embedding.RAGEmbedding import RAGEmbedding
 from fs_gpt.protocol.embedding import EmbeddingCreateParams
 
 
-def create_router(app: Server, arg: RAGEmbedding) -> APIRouter:
+def create_router(app: Server, rag: RAGEmbedding) -> APIRouter:
 
     router = APIRouter()
 
@@ -38,7 +38,7 @@ def create_router(app: Server, arg: RAGEmbedding) -> APIRouter:
 
         request.dimensions = request.dimensions or app.arguments().get("embedding_size", -1)
 
-        return arg.encode(
+        return rag.encode(
             texts=request.input,
             model=request.model,
             encoding_format=request.encoding_format,
