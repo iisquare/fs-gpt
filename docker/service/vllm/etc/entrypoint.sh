@@ -1,30 +1,17 @@
 #!/bin/bash
 
-CONFIG_FILE=/etc/vllm/config.yaml
+MODEL_PATH=/data/models/Qwen2.5-0.5B-Instruct
+API_KEY=fs-gpt
 
-function parse() {
-  cat $1 | while read LINE
-  do
-    if [ "$(echo $LINE | grep -E ' ')" != "" ];then
-      echo "$LINE" | awk -F ": " '{
-        key = $1;
-        value = $2;
-        gsub(/^\s+|\s+$/, "", key);
-        gsub(/^\s+|\s+$/, "", value);
-        if (value == "True") {
-          printf " --%s", key
-        } else if (value != "False") {
-          printf " --%s %s", key, value
-        }
-      }'
-    fi
-  done
-}
-
-cmd=$(cat <<- EOF
-vllm serve \
-$(parse $CONFIG_FILE)
-EOF
-)
-
-eval $cmd
+vllm serve ${MODEL_PATH} \
+--api-key ${API_KEY} \
+--served-model-name $(basename ${MODEL_PATH}) \
+--task generate \
+--tensor-parallel-size 1 \
+--pipeline-parallel-size 1 \
+--max-model-len 32768 \
+--gpu-memory-utilization 0.9 \
+--max-num-seqs 8 \
+--enforce-eager \
+--host 0.0.0.0 \
+--port 8000

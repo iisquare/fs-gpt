@@ -1,5 +1,0 @@
-model-path: /data/models/Qwen2.5-0.5B-Instruct
-api-key: fs-gpt
-trust-remote-code: True
-tp: 1
-dp: 1

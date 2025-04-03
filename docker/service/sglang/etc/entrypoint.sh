@@ -1,30 +1,12 @@
 #!/bin/bash
 
-CONFIG_FILE=/etc/sglang/config.yaml
+MODEL_PATH=/data/models/Qwen2.5-0.5B-Instruct
+API_KEY=fs-gpt
 
-function parse() {
-  cat $1 | while read LINE
-  do
-    if [ "$(echo $LINE | grep -E ' ')" != "" ];then
-      echo "$LINE" | awk -F ": " '{
-        key = $1;
-        value = $2;
-        gsub(/^\s+|\s+$/, "", key);
-        gsub(/^\s+|\s+$/, "", value);
-        if (value == "True") {
-          printf " --%s", key
-        } else if (value != "False") {
-          printf " --%s %s", key, value
-        }
-      }'
-    fi
-  done
-}
-
-cmd=$(cat <<- EOF
-python3 -m sglang.launch_server \
-$(parse $CONFIG_FILE)
-EOF
-)
-
-eval $cmd
+python3 -m sglang.launch_server --model-path ${MODEL_PATH} \
+--api-key ${API_KEY} \
+--trust-remote-code \
+--tp 1 \
+--dp 1 \
+--host 0.0.0.0 \
+--port 30000

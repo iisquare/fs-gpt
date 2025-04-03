@@ -1,5 +1,6 @@
 services:
   vllm:
+    restart: unless-stopped
     build:
       context: ./service/vllm
       args:
@@ -9,8 +10,13 @@ services:
     entrypoint: bash /etc/vllm/entrypoint.sh
     volumes:
       - ${MODEL_DIR}:/data/models
-      - ./service/vllm/etc/config.yaml:/etc/vllm/config.yaml
       - ./service/vllm/etc/entrypoint.sh:/etc/vllm/entrypoint.sh
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -sS http://127.0.0.1:8000/health || exit 1" ]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 6m30s
     deploy:
       resources:
         reservations:
@@ -19,6 +25,7 @@ services:
               device_ids: [ "0" ]
               capabilities: [ "gpu" ]
   sglang:
+    restart: unless-stopped
     build:
       context: ./service/sglang
       args:
@@ -28,8 +35,13 @@ services:
     entrypoint: bash /etc/sglang/entrypoint.sh
     volumes:
       - ${MODEL_DIR}:/data/models
-      - ./service/sglang/etc/config.yaml:/etc/sglang/config.yaml
       - ./service/sglang/etc/entrypoint.sh:/etc/sglang/entrypoint.sh
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -sS http://127.0.0.1:30000/health || exit 1" ]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 6m30s
     deploy:
       resources:
         reservations:
