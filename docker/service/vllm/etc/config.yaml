@@ -1,0 +1,11 @@
+device: auto
+model: /data/models/Qwen2.5-0.5B-Instruct
+api-key: fs-gpt
+served-model-name: Qwen2.5-0.5B-Instruct
+task: generate
+tensor-parallel-size: 1
+pipeline-parallel-size: 1
+max-model-len: 32768
+gpu-memory-utilization: 0.9
+max-num-seqs: 8
+enforce-eager: True
